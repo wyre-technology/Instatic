@@ -74,10 +74,64 @@ describe('canvas form controls', () => {
     expect(inputMouseDown).toBe(false)
     expect(useEditorStore.getState().selectedNodeId).toBe(inputId)
 
+    // ---- TEMPORARY CI DIAGNOSTICS (scratch branch only) ----
+    {
+      const doc = select.ownerDocument as Document
+      const win = doc.defaultView as unknown as Record<string, unknown> | null
+      const d = (k: string, v: unknown) => console.log(`[diag] ${k} = ${String(v)}`)
+      d('input.ownerDocument===select.ownerDocument', input.ownerDocument === doc)
+      d('select.isConnected', select.isConnected)
+      d('input.isConnected', input.isConnected)
+      d('select.tagName', select.tagName)
+      d('win is null', win === null)
+      d('typeof win.PointerEvent', win ? typeof win['PointerEvent'] : 'n/a')
+      d('typeof win.MouseEvent', win ? typeof win['MouseEvent'] : 'n/a')
+      d('typeof win.Event', win ? typeof win['Event'] : 'n/a')
+      d('closest(form-control)', String(select.closest('input, textarea, select, button')?.tagName))
+      d('closest(data-node-id)', String(select.closest('[data-node-id]')?.getAttribute('data-node-id')))
+      d('expected node id', selectId)
+      d('closest(canvas-interactive)', String(Boolean(select.closest('[data-canvas-interactive="true"]'))))
+      d('select.parentElement', String(select.parentElement?.tagName))
+      d('doc.contains(select)', doc.contains(select))
+      d('doc.body.contains(select)', doc.body?.contains(select))
+
+      let probeSawPointerDown = 0
+      let probeCancelable: unknown = 'never-fired'
+      let probeCtor: unknown = 'never-fired'
+      let probePreventedAtProbe: unknown = 'never-fired'
+      const probe = (event: Event) => {
+        probeSawPointerDown += 1
+        probeCancelable = event.cancelable
+        probeCtor = event.constructor?.name
+        probePreventedAtProbe = event.defaultPrevented
+      }
+      doc.addEventListener('pointerdown', probe, { capture: true })
+      let probeReturn: unknown = 'not-run'
+      await act(async () => {
+        probeReturn = fireEvent.pointerDown(select)
+      })
+      doc.removeEventListener('pointerdown', probe, { capture: true })
+      d('probe: doc capture listener fired count', probeSawPointerDown)
+      d('probe: event.cancelable', probeCancelable)
+      d('probe: event ctor', probeCtor)
+      d('probe: defaultPrevented at probe (after suppression listener)', probePreventedAtProbe)
+      d('probe: fireEvent return', probeReturn)
+      d('probe: selectedNodeId after', useEditorStore.getState().selectedNodeId)
+      d('probe: expected selectId', selectId)
+
+      let mdOnSelect: unknown = 'not-run'
+      await act(async () => {
+        mdOnSelect = fireEvent.mouseDown(select)
+      })
+      d('mouseDown(select) return', mdOnSelect)
+    }
+    // ---- END TEMPORARY CI DIAGNOSTICS ----
+
     let selectMouseDown = true
     await act(async () => {
       selectMouseDown = fireEvent.pointerDown(select)
     })
+    console.log(`[diag] final pointerDown return = ${String(selectMouseDown)}`)
     expect(selectMouseDown).toBe(false)
     expect(useEditorStore.getState().selectedNodeId).toBe(selectId)
 
