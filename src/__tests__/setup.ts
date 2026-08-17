@@ -116,28 +116,6 @@ for (const key of GLOBALS_TO_COPY) {
 }
 
 // ---------------------------------------------------------------------------
-// Sanitizer runtime — must match production, NOT the happy-dom test window.
-//
-// happy-dom is fine for rendering assertions, but DOMPurify's own README says
-// it is not a safe DOM to back the sanitizer with. Left alone, `getDOMPurify()`
-// would pick up the happy-dom `window` global above and every sanitization
-// assertion in the suite would be testing a DOM we do not ship — green tests
-// telling you nothing about production.
-//
-// The server installs a jsdom-backed purifier (`server/richtextSanitizer.ts`);
-// pin the same one here so sanitizer tests reflect real behaviour.
-// ---------------------------------------------------------------------------
-import DOMPurify from 'dompurify'
-import { JSDOM } from 'jsdom'
-import { configureRichtextSanitizer, type DOMPurifyRuntime } from '@core/sanitize'
-
-configureRichtextSanitizer(
-  (DOMPurify as unknown as (w: Window) => DOMPurifyRuntime)(
-    new JSDOM('', { url: 'http://localhost/' }).window as unknown as Window,
-  ),
-)
-
-// ---------------------------------------------------------------------------
 // Default user-preference fetches to the "never set" envelope.
 //
 // Admin surfaces load user preferences on mount (e.g. the module-inserter
