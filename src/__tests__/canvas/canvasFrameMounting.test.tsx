@@ -26,6 +26,16 @@ afterEach(() => {
   document.body.replaceChildren()
   globalThis.fetch = originalFetch
   __resetModuleInserterPreferenceForTests()
+  // The last case in this file switches the canvas into live view and never
+  // switches back. `useEditorStore` is a module singleton shared by every test
+  // file in the same `bun test` process, and `canvasView` is not part of any
+  // shared per-test reset — so without this line the file hands the *next*
+  // file a store stuck in live view. Which file that is depends on the
+  // runner's directory enumeration order, which differs between machines, so
+  // the damage is invisible locally and lands on whichever canvas test happens
+  // to run next in CI. Restore the default here rather than in the one case,
+  // so any future live-view case in this file is covered too.
+  useEditorStore.setState({ canvasView: 'design' } as Parameters<typeof useEditorStore.setState>[0])
 })
 
 beforeEach(() => {

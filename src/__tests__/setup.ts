@@ -116,6 +116,35 @@ for (const key of GLOBALS_TO_COPY) {
 }
 
 // ---------------------------------------------------------------------------
+// Sanitizer runtime — the test suite should exercise the same DOM as the
+// server.
+//
+// `server/richtextSanitizer.ts` installs a jsdom-backed purifier for the
+// running server. Left alone here, `getDOMPurify()` would instead pick up the
+// happy-dom `window` global installed above, so every sanitization assertion
+// in the suite would be exercising a DOM we never ship — green tests that say
+// nothing about the code that actually runs. Pin the same runtime the server
+// uses.
+//
+// The imports are dynamic on purpose. A static `import` anywhere in this file
+// is hoisted above the happy-dom setup above, which would evaluate dompurify /
+// jsdom / @core/sanitize before `globalThis.window` exists. `await import()`
+// keeps the evaluation exactly here, after the globals are in place.
+// ---------------------------------------------------------------------------
+{
+  const { default: DOMPurify } = await import('dompurify')
+  const { JSDOM } = await import('jsdom')
+  const { configureRichtextSanitizer } = await import('@core/sanitize')
+  type DOMPurifyRuntime = Parameters<typeof configureRichtextSanitizer>[0]
+
+  configureRichtextSanitizer(
+    (DOMPurify as unknown as (w: Window) => NonNullable<DOMPurifyRuntime>)(
+      new JSDOM('', { url: 'http://localhost/' }).window as unknown as Window,
+    ),
+  )
+}
+
+// ---------------------------------------------------------------------------
 // Default user-preference fetches to the "never set" envelope.
 //
 // Admin surfaces load user preferences on mount (e.g. the module-inserter
