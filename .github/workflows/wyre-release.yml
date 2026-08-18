@@ -9,6 +9,11 @@ on:
   push:
     branches:
       - wyre-release
+  # Manual trigger. Push-only meant the sole way to exercise this pipeline was
+  # to land a commit on the release branch, which makes diagnosing a
+  # runner-environment failure (one that reproduces in CI but not locally)
+  # needlessly destructive. Keep the button.
+  workflow_dispatch:
 
 permissions:
   contents: read
