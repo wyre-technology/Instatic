@@ -6,6 +6,10 @@ This project is pre-1.0. Breaking changes may appear in minor or patch releases 
 
 ## Unreleased
 
+### Testing
+
+- Fixed a test-order-dependent flake in `canvasFormControls.test.tsx` — the test never asserted its own `canvasView: 'design'` precondition, so it silently inherited whatever state the previous test file left on the shared `useEditorStore` singleton. Same bug class as the one partially fixed for `canvasFrameMounting.test.tsx` in an earlier release; this time the test asserts its own precondition directly instead of relying on every other file's cleanup being complete.
+
 ## 0.0.16 - 2026-08-11
 
 ### Media and integrations
