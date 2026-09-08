@@ -63,11 +63,24 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ github.token }}
 
+      # `github.repository` is not guaranteed lowercase (this fork lives under
+      # WYRE-AI), and GHCR image refs must be — same fix already applied in
+      # WYRE-AI/conduit's deploy.yml after that repo's own org move produced
+      # an invalid `ghcr.io/WYRE-AI/conduit` ref. Computed once here so the
+      # image tag can't silently point at upstream's own corebunch/instatic
+      # package again.
+      - name: Resolve GHCR image repo
+        id: repo
+        env:
+          REPO: ${{ github.repository }}
+        run: |
+          echo "image=$(printf '%s' "$REPO" | tr '[:upper:]' '[:lower:]')" >> "$GITHUB_OUTPUT"
+
       - name: Extract Docker metadata
         id: meta
         uses: docker/metadata-action@v5
         with:
-          images: ghcr.io/corebunch/instatic
+          images: ghcr.io/${{ steps.repo.outputs.image }}
           tags: |
             type=semver,pattern={{version}}
             type=semver,pattern={{major}}.{{minor}}
