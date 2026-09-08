@@ -33,6 +33,7 @@ import type {
   PluginPermission,
   PluginResource,
 } from '../types'
+import type { ContentAccessEntry } from '../contentSchemas'
 import type { PluginModuleDefinition } from '../modules'
 import type { PluginPackContents } from './definePack'
 import {
@@ -82,6 +83,16 @@ export interface DefinePluginConfig {
    * persists records under each resource's id.
    */
   resources?: PluginResource[]
+
+  /**
+   * Per-table allowlist for the `cms.content.*` SDK surface. Required
+   * (non-empty) when `permissions` includes any of `cms.content.read` /
+   * `cms.content.write` / `cms.content.publish` / `cms.content.delete` —
+   * `parsePluginManifest` fails closed otherwise. Each entry's `modes[]`
+   * must be covered by the matching `cms.content.*` permission (a `write`
+   * mode with no `cms.content.write` permission is rejected at parse time).
+   */
+  contentAccess?: ContentAccessEntry[]
 
   /**
    * Admin pages registered by the plugin (markdown / map / resource / app).
@@ -187,6 +198,9 @@ export function definePlugin(config: DefinePluginConfig): PluginDefinition {
     ...(config.icon !== undefined ? { icon: config.icon } : {}),
     ...(config.frontend !== undefined
       ? { frontend: { assets: config.frontend.assets.map((asset) => ({ ...asset })) } }
+      : {}),
+    ...(config.contentAccess
+      ? { contentAccess: config.contentAccess.map((entry) => ({ ...entry, modes: [...entry.modes] })) }
       : {}),
   }
   return {
