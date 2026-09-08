@@ -25,6 +25,12 @@ beforeEach(() => {
     activeDocument: null,
     activePageId: null,
     activeBreakpointId: 'desktop',
+    // canvasView is a module-singleton field other test files also mutate
+    // (e.g. bodyPresentation.test.tsx's last case leaves it 'live') — this
+    // test depends on 'design' mode for useCanvasFormControlSuppression to
+    // even attach (IframeFrameSurface passes enabled: !isLive), so it must
+    // assert its own precondition rather than trust whatever ran before it.
+    canvasView: 'design',
     propertiesPanel: { collapsed: false, x: 0, y: 0, width: 360 },
     propertiesPanelMode: 'docked',
     hasUnsavedChanges: false,
